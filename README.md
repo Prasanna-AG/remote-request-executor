@@ -1,2 +1,2 @@
 # remote-request-executor
-Production-grade remote request execution service (.NET 8)
+Remote request execution service
