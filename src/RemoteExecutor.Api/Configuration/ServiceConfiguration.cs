@@ -1,0 +1,129 @@
+namespace RemoteExecutor.Api.Configuration;
+
+/// <summary>
+/// Main service configuration loaded from appsettings.json
+/// </summary>
+public class ServiceConfiguration
+{
+    public const string SectionName = "Service";
+    
+    public string InstanceId { get; set; } = "remote-executor-01";
+    public int MaxRequestBodySizeKb { get; set; } = 1000;
+    public int DefaultTimeoutSeconds { get; set; } = 30;
+}
+
+/// <summary>
+/// Retry policy configuration with documented rationale
+/// </summary>
+public class RetryPolicyConfiguration
+{
+    public const string SectionName = "RetryPolicy";
+    
+    /// <summary>
+    /// Maximum number of retry attempts (including initial attempt)
+    /// Rationale: 3 attempts balances resilience with response time (initial + 2 retries)
+    /// </summary>
+    public int MaxAttempts { get; set; } = 3;
+    
+    /// <summary>
+    /// Base delay in milliseconds for exponential backoff
+    /// Rationale: 200ms provides quick retry for transient network blips
+    /// </summary>
+    public int BaseDelayMs { get; set; } = 200;
+    
+    /// <summary>
+    /// Maximum delay cap in milliseconds
+    /// Rationale: 5000ms prevents excessive wait times while allowing downstream recovery
+    /// </summary>
+    public int MaxDelayMs { get; set; } = 5000;
+    
+    /// <summary>
+    /// Jitter percentage (0.0-1.0) added to backoff delay
+    /// Rationale: 25% jitter prevents thundering herd when multiple clients retry simultaneously
+    /// Math: delay = min(maxDelay, base * 2^(attempt-1)) * (1 + random(0, jitter))
+    /// Example: attempt 2 with base=200ms: 200*2=400ms + jitter(0-100ms) = 400-500ms
+    /// </summary>
+    public double JitterPercent { get; set; } = 0.25;
+    
+    /// <summary>
+    /// HTTP status codes classified as transient (retryable)
+    /// Rationale: 
+    /// - 408 Request Timeout: network/server overload
+    /// - 429 Too Many Requests: rate limiting, retry with backoff
+    /// - 5xx: server errors, typically transient
+    /// </summary>
+    public int[] TransientStatusCodes { get; set; } = new[] { 408, 429, 500, 502, 503, 504 };
+    
+    /// <summary>
+    /// Timeout per individual attempt in milliseconds
+    /// Rationale: 10s allows reasonable time for operations while preventing indefinite hangs
+    /// </summary>
+    public int PerAttemptTimeoutMs { get; set; } = 10000;
+}
+
+/// <summary>
+/// HTTP executor configuration
+/// </summary>
+public class HttpExecutorConfiguration
+{
+    public const string SectionName = "Executors:Http";
+    
+    public string[] AllowedHeaderPrefixes { get; set; } = new[] { "Accept", "Content-Type", "User-Agent" };
+    public string[] FilteredHeaders { get; set; } = new[] { "Authorization", "Proxy-Authorization", "Cookie" };
+    public int MaxResponseBodyLengthKb { get; set; } = 512;
+    public int DefaultTimeoutSeconds { get; set; } = 15;
+}
+
+/// <summary>
+/// PowerShell executor configuration with isolation strategy
+/// </summary>
+public class PowerShellExecutorConfiguration
+{
+    public const string SectionName = "Executors:PowerShell";
+    
+    /// <summary>
+    /// Commands allowed for execution (allowlist approach)
+    /// Rationale: Explicit allowlist prevents arbitrary command execution
+    /// </summary>
+    public string[] AllowedCommands { get; set; } = new[] { "Get-Mailbox", "Get-User", "Get-DistributionGroup" };
+    
+    /// <summary>
+    /// Whether to reuse PowerShell sessions across requests
+    /// Rationale: False by default for tenant isolation - each request gets fresh session
+    /// ISOLATION STRATEGY: Per-request session creation/disposal ensures:
+    /// 1. No credential leakage between tenants
+    /// 2. No state pollution from previous commands
+    /// 3. Simplified error recovery (no stale session handling)
+    /// Trade-off: Higher latency (session setup cost) vs security/isolation
+    /// </summary>
+    public bool SessionReuseEnabled { get; set; } = false;
+    
+    public int SessionTimeoutSeconds { get; set; } = 60;
+    
+    public PowerShellAuthConfiguration Authentication { get; set; } = new();
+}
+
+public class PowerShellAuthConfiguration
+{
+    public string Type { get; set; } = "Basic";
+    public string Username { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Observability configuration
+/// </summary>
+public class ObservabilityConfiguration
+{
+    public const string SectionName = "Observability";
+    
+    public bool EnableStructuredLogging { get; set; } = true;
+    public MetricsConfiguration Metrics { get; set; } = new();
+}
+
+public class MetricsConfiguration
+{
+    public int PublishIntervalSeconds { get; set; } = 30;
+    public int[] TrackLatencyPercentiles { get; set; } = new[] { 50, 95, 99 };
+}
+
