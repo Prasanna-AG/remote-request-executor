@@ -127,6 +127,9 @@ public class PowerShellExecutor : IExecutor
     private async Task<IPowerShellSession> ConnectSessionAsync(RequestEnvelope request, CancellationToken cancellationToken)
     {
         // Simulate connection delay
+        // Rationale: 50ms approximates typical remote PowerShell session establishment time
+        // (TCP handshake + authentication + session negotiation). Used for realistic simulation
+        // of production behavior without requiring actual remote connections in development.
         await Task.Delay(50, cancellationToken); // Simulate connection time
         
         _logger.LogInformation("PowerShell session connected (simulated)");
@@ -158,6 +161,9 @@ public class PowerShellExecutor : IExecutor
         _logger.LogDebug("Executing: {FullCommand}", fullCommand);
 
         // Execute (simulated)
+        // Rationale: 100ms approximates typical PowerShell cmdlet execution time for read operations
+        // (Get-Mailbox, Get-User typically take 50-200ms depending on result size and network).
+        // Used for realistic simulation without requiring actual Exchange/AD connectivity.
         await Task.Delay(100, cancellationToken); // Simulate execution time
 
         // Generate simulated results
@@ -221,6 +227,9 @@ public class PowerShellExecutor : IExecutor
     /// </summary>
     private async Task DisconnectSessionAsync(IPowerShellSession session, CancellationToken cancellationToken)
     {
+        // Rationale: 20ms approximates session cleanup and disconnection time.
+        // Disconnect is typically faster than connect since it's mostly cleanup.
+        // Used for realistic simulation of session lifecycle without actual connections.
         await Task.Delay(20, cancellationToken); // Simulate disconnect time
         session.Dispose();
         _logger.LogInformation("PowerShell session disconnected and disposed");

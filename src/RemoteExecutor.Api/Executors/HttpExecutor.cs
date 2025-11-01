@@ -17,21 +17,30 @@ public class HttpExecutor : IExecutor
     public HttpExecutor(
         ILogger<HttpExecutor> logger, 
         IOptions<HttpExecutorConfiguration> config,
-        IOptions<RetryPolicyConfiguration> retryConfig) 
+        IOptions<RetryPolicyConfiguration> retryConfig,
+        HttpClient? httpClient = null) 
     { 
         _logger = logger;
         _config = config.Value;
         _transientStatusCodes = retryConfig.Value.TransientStatusCodes;
         
-        // Create HttpClient with automatic decompression and timeout
-        var handler = new HttpClientHandler
+        // Use provided HttpClient (for testing) or create new one
+        if (httpClient != null)
         {
-            AutomaticDecompression = System.Net.DecompressionMethods.All
-        };
-        _http = new HttpClient(handler)
+            _http = httpClient;
+        }
+        else
         {
-            Timeout = TimeSpan.FromSeconds(_config.DefaultTimeoutSeconds)
-        };
+            // Create HttpClient with automatic decompression and timeout
+            var handler = new HttpClientHandler
+            {
+                AutomaticDecompression = System.Net.DecompressionMethods.All
+            };
+            _http = new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromSeconds(_config.DefaultTimeoutSeconds)
+            };
+        }
         
         _logger.LogInformation("HttpExecutor initialized: MaxResponseBody={MaxKb}KB, Timeout={Timeout}s", 
             _config.MaxResponseBodyLengthKb, _config.DefaultTimeoutSeconds);
@@ -119,9 +128,16 @@ public class HttpExecutor : IExecutor
             _logger.LogInformation("HTTP response received: Status={Status}, BodyLength={BodyLength}, Truncated={Truncated}", 
                 statusCode, body.Length, originalLength > maxBodyLength);
 
+            // Threshold: status >= 400 indicates HTTP error responses (per RFC 7231)
+            // Rationale: 4xx are client errors, 5xx are server errors - both warrant warning-level logging
             if (statusCode >= 400)
             {
-                _logger.LogWarning("HTTP error response: Status={Status}, Body={Body}", statusCode, body.Length > 500 ? body[..500] : body);
+                // Truncate error bodies to 500 characters for logging
+                // Rationale: Prevents log bloat from large error payloads while retaining enough context
+                // (first 500 chars typically contain error message/details) for debugging.
+                const int maxErrorLogLength = 500;
+                _logger.LogWarning("HTTP error response: Status={Status}, Body={Body}", 
+                    statusCode, body.Length > maxErrorLogLength ? body[..maxErrorLogLength] : body);
             }
 
             return ExecutionResult.FromHttp(statusCode, headers, body, _transientStatusCodes);

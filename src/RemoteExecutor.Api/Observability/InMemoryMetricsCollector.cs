@@ -11,6 +11,14 @@ public class InMemoryMetricsCollector : IMetricsCollector
 {
     private readonly ConcurrentDictionary<string, long> _counts = new();
     private readonly ConcurrentQueue<double> _latencies = new();
+    
+    /// <summary>
+    /// Maximum number of latency samples to retain in memory
+    /// Rationale: 10,000 samples provides sufficient data for accurate percentile calculations
+    /// (p95, p99) while limiting memory usage to ~80KB (8 bytes/double).
+    /// Trade-off: Very high traffic scenarios may drop samples, but 10K samples represents
+    /// ~3 hours at 1 request/second or ~10 minutes at 10 req/s, sufficient for monitoring windows.
+    /// </summary>
     private const int MaxSamples = 10000;
 
     public void Increment(string key) => _counts.AddOrUpdate(key, 1, (_, v) => v + 1);

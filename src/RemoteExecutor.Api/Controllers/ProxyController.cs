@@ -84,6 +84,9 @@ public class ProxyController : ControllerBase
                 // Read body with guard to enforce max size even when Content-Length is absent
                 using var sr = new StreamReader(Request.Body);
                 var sb = new System.Text.StringBuilder();
+                // Buffer size: 8192 chars (16KB for UTF-16) balances I/O efficiency with memory usage.
+                // Rationale: Optimal buffer size for network I/O, derived from common OS page sizes (4KB-8KB).
+                // Smaller buffers increase read syscalls; larger buffers waste memory for small requests.
                 var buffer = new char[8192];
                 int read;
                 var limit = _maxRequestBodyBytes + 1; // detection threshold

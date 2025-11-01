@@ -1,5 +1,6 @@
 using RemoteExecutor.Api.Configuration;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,7 +44,43 @@ builder.Services.AddSingleton<IRetryPolicyFactory, DefaultRetryPolicyFactory>();
 builder.Services.AddSingleton<RequestValidator>();
 
 // Executors: Register by interface for extensibility
-builder.Services.AddSingleton<IExecutor, HttpExecutor>();
+// Conditionally use mock HttpClient in Development mode if configured
+var httpConfig = builder.Configuration.GetSection(HttpExecutorConfiguration.SectionName).Get<HttpExecutorConfiguration>();
+
+// Diagnostic logging for configuration
+var tempLoggerFactory = LoggerFactory.Create(config => config.AddConsole());
+var tempLogger = tempLoggerFactory.CreateLogger<Program>();
+var envVarValue = builder.Configuration.GetSection(HttpExecutorConfiguration.SectionName)["UseMockHttpClient"];
+var envVarRaw = Environment.GetEnvironmentVariable("Executors__Http__UseMockHttpClient");
+tempLogger.LogInformation(
+    "[CONFIG DEBUG] Environment={Environment}, UseMockHttpClient={UseMockHttpClient}, " +
+    "ConfigSectionValue={ConfigSectionValue}, EnvVarRaw={EnvVarRaw}, WillUseMock={WillUseMock}",
+    builder.Environment.EnvironmentName,
+    httpConfig?.UseMockHttpClient ?? false,
+    envVarValue ?? "null",
+    envVarRaw ?? "null",
+    (httpConfig?.UseMockHttpClient == true && builder.Environment.IsDevelopment()));
+
+if (httpConfig?.UseMockHttpClient == true && builder.Environment.IsDevelopment())
+{
+    // Register HttpExecutor with mocked HttpClient for testing without external network calls
+    builder.Services.AddSingleton<IExecutor>(sp =>
+    {
+        var logger = sp.GetRequiredService<ILogger<HttpExecutor>>();
+        var httpConfigOpts = sp.GetRequiredService<IOptions<HttpExecutorConfiguration>>();
+        var retryConfig = sp.GetRequiredService<IOptions<RetryPolicyConfiguration>>();
+        var mockHttp = new HttpClient(new MockHttpMessageHandler())
+        {
+            Timeout = TimeSpan.FromSeconds(httpConfigOpts.Value.DefaultTimeoutSeconds)
+        };
+        logger.LogWarning("HttpExecutor configured with MOCK HttpClient - no external network calls will be made");
+        return new HttpExecutor(logger, httpConfigOpts, retryConfig, mockHttp);
+    });
+}
+else
+{
+    builder.Services.AddSingleton<IExecutor, HttpExecutor>();
+}
 builder.Services.AddSingleton<IExecutor, PowerShellExecutor>();
 
 builder.Services.AddControllers()

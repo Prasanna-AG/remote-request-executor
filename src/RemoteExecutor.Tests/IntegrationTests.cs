@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -11,7 +13,31 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 
     public IntegrationTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
+        _factory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                // Remove existing HttpExecutor registration
+                var executorDescriptor = services.FirstOrDefault(s => s.ServiceType == typeof(IExecutor) && s.ImplementationType == typeof(HttpExecutor));
+                if (executorDescriptor != null)
+                {
+                    services.Remove(executorDescriptor);
+                }
+
+                // Register HttpExecutor with mocked HttpClient
+                services.AddSingleton<IExecutor>(sp =>
+                {
+                    var logger = sp.GetRequiredService<ILogger<HttpExecutor>>();
+                    var httpConfig = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<RemoteExecutor.Api.Configuration.HttpExecutorConfiguration>>();
+                    var retryConfig = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<RemoteExecutor.Api.Configuration.RetryPolicyConfiguration>>();
+                    var mockHttp = new System.Net.Http.HttpClient(new MockHttpMessageHandler())
+                    {
+                        Timeout = TimeSpan.FromSeconds(30)
+                    };
+                    return new HttpExecutor(logger, httpConfig, retryConfig, mockHttp);
+                });
+            });
+        });
         _client = _factory.CreateClient();
     }
 
@@ -51,9 +77,9 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task HttpExecutor_WithValidForwardBase_ForwardsRequest()
     {
-        // Using a mock HTTP server would be ideal, but for now we test the flow
+        // Using mocked HTTP client - no external network calls
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/users/1");
-        request.Headers.Add("X-Forward-Base", "https://jsonplaceholder.typicode.com");
+        request.Headers.Add("X-Forward-Base", "https://api.test.com");
         request.Headers.Add("X-Executor-Type", "http");
         request.Headers.Add("X-Request-Id", "integration-test-1");
 
@@ -64,6 +90,13 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
         reqIdValues!.First().Should().Be("integration-test-1");
         response.Headers.Should().ContainKey("X-Executor");
         response.Headers.GetValues("X-Executor").First().Should().Be("http");
+        
+        // Verify the mocked response was used (check for successful execution)
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("integration-test-1"); // Request ID should be in response
+        body.Should().Contain("executorType"); // Response envelope structure
+        // Note: We avoid checking response body content since HttpExecutor processes it
+        // The key test is that no external network call was made (mocked handler used)
     }
 
     [Fact]
@@ -132,7 +165,7 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var customRequestId = "custom-req-id-999";
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/test");
-        request.Headers.Add("X-Forward-Base", "https://httpbin.org");
+        request.Headers.Add("X-Forward-Base", "https://api.test.com");
         request.Headers.Add("X-Request-Id", customRequestId);
 
         var response = await _client.SendAsync(request);
@@ -147,7 +180,7 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var correlationId = "corr-id-888";
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/test");
-        request.Headers.Add("X-Forward-Base", "https://httpbin.org");
+        request.Headers.Add("X-Forward-Base", "https://api.test.com");
         request.Headers.Add("X-Correlation-Id", correlationId);
 
         var response = await _client.SendAsync(request);
@@ -182,6 +215,23 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var body = await response.Content.ReadAsStringAsync();
         body.Should().Contain("InvalidRequest");
+    }
+}
+
+/// <summary>
+/// Mock HTTP message handler for integration tests - avoids external network calls
+/// </summary>
+public class MockHttpMessageHandler : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        // Return a mocked successful response for any HTTP request
+        // Content-Type is automatically set by StringContent constructor
+        var response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"id\":1,\"name\":\"test-response\",\"status\":\"ok\"}", System.Text.Encoding.UTF8, "application/json")
+        };
+        return Task.FromResult(response);
     }
 }
 

@@ -26,6 +26,9 @@ public class ExecutionResult
     public static ExecutionResult FromHttp(int status, Dictionary<string, string> headers, string body, int[]? transientStatusCodes = null)
     {
         var isTransient = IsTransientHttpStatus(status, transientStatusCodes ?? new[] { 408, 429, 500, 502, 503, 504 });
+        // Success range: 200-299 (per RFC 7231 Section 6.3)
+        // Rationale: HTTP status codes 2xx indicate successful request processing.
+        // This includes 200 (OK), 201 (Created), 204 (No Content), etc.
         return new() 
         { 
             IsSuccess = status >= 200 && status < 300, 
