@@ -1,0 +1,18 @@
+{
+  "description": "Example HTTP executor request - POST request to create a new resource",
+  "method": "POST",
+  "url": "http://localhost:5072/api/posts",
+  "headers": {
+    "X-Forward-Base": "https://jsonplaceholder.typicode.com",
+    "X-Executor-Type": "http",
+    "X-Request-Id": "req-http-post-001",
+    "X-Correlation-Id": "corr-post-123",
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  },
+  "query": {},
+  "body": "{\"title\":\"My New Post\",\"body\":\"This is the content of my post\",\"userId\":1}",
+  "notes": "For POST, PUT, and PATCH requests, include the request body in JSON format. The body will be forwarded to the target API specified in X-Forward-Base."
+}
+
+

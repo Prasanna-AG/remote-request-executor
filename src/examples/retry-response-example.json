@@ -1,0 +1,36 @@
+{
+  "requestId": "req-retry-001",
+  "correlationId": "corr-retry-456",
+  "executorType": "http",
+  "startedAt": "2025-01-15T10:45:00.000Z",
+  "completedAt": "2025-01-15T10:45:01.850Z",
+  "overallStatus": "Success",
+  "attempts": 3,
+  "attemptSummaries": [
+    {
+      "attempt": 1,
+      "outcome": "TransientFailure",
+      "message": "Timeout"
+    },
+    {
+      "attempt": 2,
+      "outcome": "TransientFailure",
+      "message": "NetworkError"
+    },
+    {
+      "attempt": 3,
+      "outcome": "Success",
+      "message": null
+    }
+  ],
+  "executorResult": {
+    "httpStatus": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8",
+      "Content-Length": "42",
+      "Date": "Wed, 15 Jan 2025 10:45:01 GMT"
+    },
+    "body": "{\"status\":\"ok\",\"data\":\"retrieved after retries\"}"
+  },
+  "notes": "This example shows a response after automatic retries. The system automatically retries transient failures (timeouts, 5xx errors, network errors) with exponential backoff. After 3 attempts, the request succeeded."
+}

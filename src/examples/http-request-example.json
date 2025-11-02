@@ -1,0 +1,16 @@
+{
+  "description": "Example HTTP executor request - GET request to fetch user data",
+  "method": "GET",
+  "url": "http://localhost:5072/api/users/1",
+  "headers": {
+    "X-Forward-Base": "https://jsonplaceholder.typicode.com",
+    "X-Executor-Type": "http",
+    "X-Request-Id": "req-http-001",
+    "X-Correlation-Id": "corr-abc-123",
+    "Accept": "application/json",
+    "User-Agent": "RemoteRequestExecutor/1.0"
+  },
+  "query": {},
+  "body": null,
+  "notes": "This is an example of how to make an HTTP executor request. The X-Forward-Base header is required to specify the target API base URL."
+}

@@ -1,0 +1,18 @@
+{
+  "description": "Example PowerShell executor request - Get-Mailbox command",
+  "method": "POST",
+  "url": "http://localhost:5072/api/mailbox/list",
+  "headers": {
+    "X-Executor-Type": "powershell",
+    "X-PS-Command": "Get-Mailbox",
+    "X-PS-Filter": "Department -eq 'IT'",
+    "X-PS-ResultSize": "100",
+    "X-PS-MaxResults": "10",
+    "X-Request-Id": "req-ps-001",
+    "X-Correlation-Id": "corr-xyz-789",
+    "Content-Type": "application/json"
+  },
+  "query": {},
+  "body": null,
+  "notes": "This is an example of how to make a PowerShell executor request. Both X-Executor-Type and X-PS-Command headers are required. Only commands in the allowlist (Get-Mailbox, Get-User, Get-DistributionGroup) are permitted."
+}

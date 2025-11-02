@@ -1,0 +1,75 @@
+version: '3.8'
+
+# Docker Compose configuration for Remote Request Executor API
+# 
+# Usage:
+#   docker-compose up -d          # Start with mock mode (Development)
+#   docker-compose down           # Stop and remove containers
+#   docker-compose up -d --build   # Rebuild and start
+#   docker-compose logs -f         # View logs
+#
+# To run in Production mode (real HTTP calls):
+#   docker-compose -f docker-compose.yml -f docker-compose.production.yml up -d
+#
+# Access:
+#   HTTP:  http://localhost:5072
+
+services:
+  remote-executor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: remote-executor:latest
+    container_name: remote-executor
+    ports:
+      - "5072:5072"  # HTTP
+    environment:
+      # ============================================================
+      # Development Configuration (Default)
+      # ============================================================
+      # Development mode configuration
+      - ASPNETCORE_ENVIRONMENT=Development
+      
+      # URL configuration - HTTP only
+      - ASPNETCORE_URLS=http://+:5072
+      
+      # Enable mock HTTP client - all HTTP requests return mocked responses
+      # No external network calls will be made (useful for offline testing)
+      # To disable: set to false or use docker-compose.production.yml
+      - Executors__Http__UseMockHttpClient=true
+      
+      # ============================================================
+      # Service Configuration
+      # ============================================================
+      - Service__InstanceId=docker-instance-01
+      - Service__MaxRequestBodySizeKb=1000
+      - Service__DefaultTimeoutSeconds=30
+      
+      # ============================================================
+      # Retry Policy Configuration
+      # ============================================================
+      - RetryPolicy__MaxAttempts=3
+      - RetryPolicy__BaseDelayMs=200
+      - RetryPolicy__MaxDelayMs=5000
+      - RetryPolicy__JitterPercent=0.25
+      - RetryPolicy__PerAttemptTimeoutMs=10000
+      - RetryPolicy__TransientStatusCodes__0=408
+      - RetryPolicy__TransientStatusCodes__1=429
+      - RetryPolicy__TransientStatusCodes__2=500
+      - RetryPolicy__TransientStatusCodes__3=502
+      - RetryPolicy__TransientStatusCodes__4=503
+      - RetryPolicy__TransientStatusCodes__5=504
+      
+      # ============================================================
+      # Logging Configuration
+      # ============================================================
+      - Logging__Console__FormatterName=json
+      - Logging__Console__FormatterOptions__TimestampFormat=yyyy-MM-ddTHH:mm:ss.fffZ
+      - Logging__Console__FormatterOptions__UseUtcTimestamp=true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:5072/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

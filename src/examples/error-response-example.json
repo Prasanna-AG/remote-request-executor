@@ -1,0 +1,22 @@
+{
+  "requestId": "req-error-001",
+  "correlationId": "corr-error-123",
+  "executorType": "http",
+  "startedAt": "2025-01-15T10:40:00.000Z",
+  "completedAt": "2025-01-15T10:40:00.056Z",
+  "overallStatus": "Failure",
+  "attempts": 1,
+  "attemptSummaries": [
+    {
+      "attempt": 1,
+      "outcome": "PermanentFailure",
+      "message": "Missing X-Forward-Base header"
+    }
+  ],
+  "executorResult": {
+    "errorCode": "BadConfiguration",
+    "error": "Missing X-Forward-Base header",
+    "isTransient": false
+  },
+  "notes": "Common error codes: BadConfiguration, MissingCommand, CommandNotAllowed, UnsupportedExecutor, InvalidRequest, InvalidHttpMethod, InvalidUri, NetworkError, Timeout, ExecutorError"
+}

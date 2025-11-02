@@ -1,0 +1,60 @@
+{
+  "requestId": "req-ps-001",
+  "correlationId": "corr-xyz-789",
+  "executorType": "powershell",
+  "startedAt": "2025-01-15T10:35:00.000Z",
+  "completedAt": "2025-01-15T10:35:00.170Z",
+  "overallStatus": "Success",
+  "attempts": 1,
+  "attemptSummaries": [
+    {
+      "attempt": 1,
+      "outcome": "Success",
+      "message": null
+    }
+  ],
+  "executorResult": {
+    "psCommand": "Get-Mailbox -Filter \"Department -eq 'IT'\" -ResultSize 100",
+    "psStdout": [
+      "DisplayName: User 1, PrimarySmtpAddress: user1@contoso.com",
+      "DisplayName: User 2, PrimarySmtpAddress: user2@contoso.com",
+      "DisplayName: User 3, PrimarySmtpAddress: user3@contoso.com",
+      "DisplayName: User 4, PrimarySmtpAddress: user4@contoso.com",
+      "DisplayName: User 5, PrimarySmtpAddress: user5@contoso.com",
+      "Simulated output"
+    ],
+    "psStderr": [],
+    "psObjects": [
+      {
+        "DisplayName": "User 1",
+        "PrimarySmtpAddress": "user1@contoso.com",
+        "MailboxType": "UserMailbox",
+        "DatabaseName": "DB01"
+      },
+      {
+        "DisplayName": "User 2",
+        "PrimarySmtpAddress": "user2@contoso.com",
+        "MailboxType": "UserMailbox",
+        "DatabaseName": "DB01"
+      },
+      {
+        "DisplayName": "User 3",
+        "PrimarySmtpAddress": "user3@contoso.com",
+        "MailboxType": "UserMailbox",
+        "DatabaseName": "DB01"
+      },
+      {
+        "DisplayName": "User 4",
+        "PrimarySmtpAddress": "user4@contoso.com",
+        "MailboxType": "UserMailbox",
+        "DatabaseName": "DB01"
+      },
+      {
+        "DisplayName": "User 5",
+        "PrimarySmtpAddress": "user5@contoso.com",
+        "MailboxType": "UserMailbox",
+        "DatabaseName": "DB01"
+      }
+    ]
+  }
+}

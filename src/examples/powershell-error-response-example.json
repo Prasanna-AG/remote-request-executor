@@ -1,0 +1,23 @@
+{
+  "requestId": "req-ps-error-001",
+  "correlationId": "corr-ps-error-789",
+  "executorType": "powershell",
+  "startedAt": "2025-01-15T10:50:00.000Z",
+  "completedAt": "2025-01-15T10:50:00.012Z",
+  "overallStatus": "Failure",
+  "attempts": 1,
+  "attemptSummaries": [
+    {
+      "attempt": 1,
+      "outcome": "PermanentFailure",
+      "message": "Command 'Get-MailboxStatistics' is not in the allowlist. Allowed: Get-Mailbox, Get-User, Get-DistributionGroup"
+    }
+  ],
+  "executorResult": {
+    "errorCode": "CommandNotAllowed",
+    "error": "Command 'Get-MailboxStatistics' is not in the allowlist. Allowed: Get-Mailbox, Get-User, Get-DistributionGroup",
+    "isTransient": false
+  },
+  "notes": "Only commands in the allowlist can be executed. Attempting to execute a disallowed command will result in this error. The allowlist is configurable via appsettings.json."
+}
+

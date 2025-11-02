@@ -11,7 +11,7 @@ public class PowerShellExecutorTests
     {
         var config = Options.Create(new PowerShellExecutorConfiguration
         {
-            AllowedCommands = new[] { "Get-Mailbox", "Get-User", "Get-Recipient" },
+            AllowedCommands = new[] { "Get-Mailbox", "Get-User", "Get-DistributionGroup" },
             SessionReuseEnabled = false,
             SessionTimeoutSeconds = 60
         });
@@ -63,7 +63,7 @@ public class PowerShellExecutorTests
     [Theory]
     [InlineData("Get-Mailbox")]
     [InlineData("Get-User")]
-    [InlineData("Get-Recipient")]
+    [InlineData("Get-DistributionGroup")]
     public async Task AllowlistedCommand_ExecutesSuccessfully(string command)
     {
         var request = new RequestEnvelope
