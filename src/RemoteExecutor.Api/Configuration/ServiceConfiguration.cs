@@ -104,7 +104,7 @@ public class HttpExecutorConfiguration
     
     /// <summary>
     /// When true in Development mode, uses a mock HttpClient that returns test responses
-    /// without making real external network calls. Useful for local testing with Swagger/Postman.
+    /// without making real external network calls. Useful for local testing with Postman or cURL.
     /// </summary>
     public bool UseMockHttpClient { get; set; } = false;
 }

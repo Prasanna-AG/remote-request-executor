@@ -90,29 +90,6 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = false;
     });
 
-// Swagger in development
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen(c =>
-    {
-        c.SwaggerDoc("v1", new() 
-        { 
-            Title = "Remote Request Executor API", 
-            Version = "v1",
-            Description = @"
-A resilient proxy API for executing HTTP and PowerShell requests with:
-- Automatic retry with exponential backoff
-- Request/response envelope with traceability
-- Structured logging and metrics
-- Configurable timeouts and limits
-- Command allowlisting for security
-            "
-        });
-        c.OperationFilter<CustomHeaderSwaggerFilter>();
-    });
-}
-
 var app = builder.Build();
 
 // Log startup configuration
@@ -120,16 +97,6 @@ var logger = app.Services.GetRequiredService<ILogger<Program>>();
 var serviceConfig = app.Services.GetRequiredService<IOptions<ServiceConfiguration>>().Value;
 logger.LogInformation("Starting Remote Executor API: InstanceId={InstanceId}, Environment={Environment}", 
     serviceConfig.InstanceId, app.Environment.EnvironmentName);
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Remote Executor API v1");
-        c.RoutePrefix = string.Empty; // Serve Swagger UI at root
-    });
-}
 
 // Health check endpoint (lightweight)
 app.MapGet("/ping", () => Results.Text("pong", "text/plain"));
