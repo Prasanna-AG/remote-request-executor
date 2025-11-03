@@ -5,6 +5,7 @@ This document describes how and where AI tools were utilized in the development 
 ## AI Tool Used
 
 **GitHub Copilot** - AI-powered code completion and assistance tool integrated into the development environment.
+**Microsoft Copilot** - AI assistant used for documentation and general code suggestions
 
 ## Scope of AI Assistance
 
@@ -21,7 +22,18 @@ AI assisted in creating the initial scaffolding and structure for:
 
 **Purpose**: To establish a solid architectural foundation and reduce boilerplate setup time, allowing focus on implementing business logic.
 
-### 2. Documentation Generation
+### 2. General Code Suggestions
+
+AI tools provided suggestions for:
+
+- **Code patterns** - Following .NET best practices and conventions
+- **Error handling approaches** - Suggestions for exception management patterns
+- **Configuration structure** - Recommendations for settings organization
+- **Code refactoring ideas** - Suggestions for improving code structure and maintainability
+
+**Purpose**: To leverage AI insights for code quality and adherence to best practices while maintaining developer control over final implementation.
+
+### 3. Documentation Generation
 
 AI was used to help generate and structure documentation files, including:
 
